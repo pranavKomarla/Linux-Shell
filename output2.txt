@@ -1,0 +1,16 @@
+arraylist.h
+file.txt
+foobar.txt
+input.txt
+Makefile
+mysh
+mysh2.c
+mysh.c
+mysh.o
+myshOne.txt
+output2.txt
+output.txt
+Readme.txt
+test2.sh
+testDirectory
+test.txt

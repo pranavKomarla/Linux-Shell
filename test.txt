@@ -1,0 +1,23 @@
+cd
+cd file_does_not_exist
+which file_does_not_exist
+ls > output.txt | output2.txt 
+echo Hello
+echo whatsup
+pwd
+which ls
+cd testDirectory
+pwd
+cat foo*.txt
+cat foo*.txt | grep Hello
+cat foo*.txt | wc -l
+cd ..
+then ls
+else pwd
+ls > output.txt
+cat input.txt | grep hello
+ps aux | grep mysh
+cat < input.txt | grep hello
+cat input.txt | grep hello > output2.txt
+cat < input.txt > output.txt 
+exit hellOne hellTwo

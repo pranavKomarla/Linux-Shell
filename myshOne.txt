@@ -1,0 +1,400 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <time.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <assert.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <dirent.h>
+
+#define BUFSIZE 4096
+#define DELIM " "
+
+int currentPosition = 0;
+int count;
+int success = 0;
+
+void make_tokens(const char* line);
+
+
+
+void read_lines(const char* filename) {
+
+    
+    count = 0;
+    //printf("here2\n");
+
+    int fd = open(filename, O_RDONLY);
+    if (fd == -1) {
+        perror("Error opening dictionary file");
+        exit(EXIT_FAILURE);
+    }
+
+
+    int bytes_read;
+    
+    int line_length = 0; 
+
+    int buflength = BUFSIZE;
+    char *buffer = malloc(buflength);
+    int position = 0;
+    int line_start;
+    char** tokens; 
+
+    while ((bytes_read = read(fd, buffer + position, buflength - position)) > 0) {
+        //if (DEBUG) printf("read %d bytes; pos=%d\n", bytes, pos);
+        line_start = 0;
+        int bufend = position + bytes_read;
+        while (position < bufend) {
+            //if (DEBUG) printf("start %d, pos %d, char '%c'\n", line_start, pos, buf[pos]);
+            if (buffer[position] == '\n') {
+                
+                char* start = buffer + line_start;
+                buffer[position] = '\0';
+                
+                make_tokens(buffer + line_start);
+                
+
+                
+            
+                
+
+                line_start = position + 1;
+            }
+            position++;
+        }
+
+        if (line_start == position) {
+            position = 0;
+        } else if (line_start > 0) {
+            int segment_length = position - line_start;
+            memmove(buffer, buffer + line_start, segment_length);
+            position = segment_length;
+            } else if (bufend == buflength) {
+                buflength *= 2;
+                buffer = realloc(buffer, buflength);
+            
+            }
+    }
+        if (position > 0) {
+            //printf("HERE!\n"); 
+            if (position == buflength) {
+                buffer = realloc(buffer, buflength + 1);
+            }
+            buffer[position] = '\0';
+         
+    
+        }
+    free(buffer);
+
+    close(fd);
+
+    
+
+}
+
+void execute_command(char** args) {
+    //printf("IN HERE!!\n");
+    if(strcmp(args[0], "echo") == 0) {
+        
+        printf("%s\n", args[1]); 
+        success = 1;
+    } else if(strcmp(args[0], "cd") == 0) {
+        if(args[1] == NULL || args[2] != NULL) {
+            fprintf(stderr, "cd: Error Number of Parameters\n");
+            success = -1;
+        } else if(chdir(args[1]) == 0){    
+            success = 1;
+        } else {
+            success = -1;
+            fprintf(stderr, "cd: not functional");
+        }
+
+    } else if(strcmp(args[0], "pwd") == 0) {
+        char cwd[1024]; // Buffer to store the current working directory
+        if (getcwd(cwd, sizeof(cwd)) != NULL) {
+            printf("%s\n", cwd);
+            success = 1;
+        } else {
+            perror("getcwd() error");
+            success = -1;
+        
+        }
+  
+    } else if(strcmp(args[0], "which") == 0) {
+        if (args[1] == NULL) {
+            success = -1;
+            return;
+        }
+
+        char cwdPath[1024]; // Buffer to store the current working directory
+
+        if (getcwd(cwdPath, sizeof(cwdPath)) != NULL) {
+            //printf("Current working directory: %s\n", cwdPath);
+        } else {
+            perror("getcwd() error");
+       
+        }
+
+        
+        // char *path = malloc(15 + strlen(args[1]) + 1);
+        // int found = 0;
+
+        // strcpy(path, "/usr/local/bin/");
+        strcat(cwdPath, "/");
+        strcat(cwdPath, args[1]);
+
+        if (access(cwdPath, F_OK) == 0) {
+            printf("%s\n", cwdPath);
+            success = 1;
+        } else {
+            fprintf(stderr, "File does not exist");
+            success = -1;
+        }
+    } else if(strcmp(args[0], "exit") == 0) {
+        int i = 1;
+        while(args[i] != NULL) {
+            printf("%s ", args[i]);
+            i++;
+        }
+        printf("\n");
+        printf("Exiting My Shell!\n");
+        return;
+    
+    }
+
+}
+
+
+
+// int batch_mode(const char* filename) {
+
+    
+//     return 0;
+// }
+
+void getLine() {
+    
+    char* buffer = malloc(BUFSIZE * sizeof(char));
+    int bytes_read;
+
+
+}
+
+void interactive_mode() {
+    printf("Welcome to my shell!");
+
+    while(1) {
+        char* line;
+        line = NULL;
+        printf("mysh>");
+        line = getLine();
+        
+        
+    }
+
+
+  
+
+    
+
+
+}
+
+
+void make_tokens (const char* line) {
+    char** tokens = NULL; 
+    int count = 0;
+    int position = 0;
+    int bufferSize = BUFSIZE;
+
+    char *token;
+
+    tokens = NULL;
+
+    token = strtok(line, DELIM);
+
+    while(token != NULL) {
+
+        
+        // if(strchr(token, '*') == NULL) {
+        //     tokens = realloc(tokens, (count + 1) * sizeof(char*));
+        //     tokens[position] = token;
+        //     position++; 
+
+
+        //     count++;
+        // } else {
+            tokens = realloc(tokens, (count + 1) * sizeof(char*));
+            tokens[position] = token;
+            position++;
+            count++; 
+            //expand_wildcard(token, tokens, count, position);
+            
+        //}
+        
+        
+
+        token = strtok(NULL, DELIM);
+    }
+
+    tokens[position] = NULL;
+    parse(tokens, count);
+
+    
+}
+
+
+int redirect(char** tokens, char** argsList, char* input_file, char* output_file) {
+
+    int redirect = 0;
+    int i = 0; 
+    while(tokens[i] != NULL) {
+
+        if (strcmp(tokens[i], "<") == 0) {
+            redirect = -1;
+            if (tokens[i] != NULL) {
+                input_file = strdup(tokens[i + 1]);
+            } else {
+                fprintf(stderr, "Syntax error: Missing input file after '<'\n");
+                return;
+            }
+        } else if (strcmp(tokens[i], ">") == 0) {
+            redirect = 1;
+            if (tokens[i] != NULL) {
+                output_file = strdup(tokens[i - 1]);
+            } else {
+                fprintf(stderr, "Syntax error: Missing output file after '>'\n");
+                return;
+            }
+        } 
+        //else if(strchr(tokens[i], '*') != NULL) {
+        //     expand_wildcard(tokens[i], argsList, listPosition, listCount);
+        //     listCount++;
+        //     listPosition++; 
+        // } 
+        i++;
+    }
+
+    int pid = fork();
+
+    if(pid == 0) {
+
+        if(redirect == - 1) {
+            int input = open(input_file, O_RDONLY);
+            
+
+            dup2(input, STDIN_FILENO);
+            close(input);
+
+        }
+
+        if (redirect == 1) {
+            int output = open(output_file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+            
+            // Redirect standard output to the file
+            dup2(output, STDOUT_FILENO);
+            close(output);
+        }
+
+        execvp(tokens[0], tokens);
+        perror("execvp");
+        exit(EXIT_FAILURE);
+
+
+    }
+
+
+
+}
+
+
+void parse(char **tokens, int count) {
+    //printf("HERE!!!!\n"); 
+    //printf("first token is: %s\n", tokens[0]); 
+
+    char** argsList;
+    argsList = NULL; 
+    int listCount = 0;
+    int listPosition = 0;
+    char* input_file = NULL;
+    char* output_file = NULL;
+
+
+    //checks for builtin functions
+    if(strcmp(tokens[0], "echo") == 0 || strcmp(tokens[0], "cd") == 0 || strcmp(tokens[0], "pwd") == 0 || strcmp(tokens[0], "which") == 0 || strcmp(tokens[0], "exit") == 0) {
+        execute_command(tokens);
+    } 
+
+    //Now we check for redirection
+    //redirect(tokens, argsList, input_file, output_file);
+  
+
+
+
+    
+}
+
+void expand_wildcard(char* token, char** argsList, int listPosition, int listCount) {
+    DIR *dir = opendir(".");
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (fnmatch(token, entry->d_name, 0) == 0) {
+            // Match found, add file name to argument list
+            printf("Match found: %s\n", entry->d_name);
+            argsList = realloc(argsList, (listCount + 1) * sizeof(char*));
+            argsList[listPosition] = entry->d_name; 
+            // Add file name to argument list
+            // Code to add file name to argument list
+        }
+    }
+    closedir(dir); 
+
+}
+
+
+int main(int argc, char *argv[]) {
+
+    // if (argc == 2) {
+    //     batch_mode(argv[1]);
+    // } else {
+    //     interactive_mode();
+    // }
+
+    interactive_mode();
+
+    char *filename = argv[1];
+
+  
+
+    char** lines;
+    read_lines(filename); 
+
+    // for(int i = 0; i < count; i++) {
+       
+    //     printf("%s\n", lines[i]);
+    // }   
+
+
+    
+
+
+
+
+
+    return 0; 
+
+
+
+
+}
+
+
